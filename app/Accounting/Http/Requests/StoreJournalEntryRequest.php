@@ -9,6 +9,13 @@ class StoreJournalEntryRequest extends FormRequest
 {
     use HasAccountingValidationRules;
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'auto_post' => $this->boolean('auto_post'),
+        ]);
+    }
+
     public function authorize(): bool
     {
         return $this->user()?->can('journal-entries.create') ?? false;

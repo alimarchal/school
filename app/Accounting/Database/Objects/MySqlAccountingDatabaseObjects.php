@@ -56,16 +56,16 @@ class MySqlAccountingDatabaseObjects implements AccountingDatabaseObjects
                 at.name AS account_type,
                 at.report_group,
                 coa.normal_balance,
-                COALESCE(SUM(jed.debit), 0) AS total_debits,
-                COALESCE(SUM(jed.credit), 0) AS total_credits,
+                COALESCE(SUM(CASE WHEN je.status = 'posted' THEN jed.debit ELSE 0 END), 0) AS total_debits,
+                COALESCE(SUM(CASE WHEN je.status = 'posted' THEN jed.credit ELSE 0 END), 0) AS total_credits,
                 CASE
-                    WHEN coa.normal_balance = 'debit' THEN COALESCE(SUM(jed.debit - jed.credit), 0)
-                    ELSE COALESCE(SUM(jed.credit - jed.debit), 0)
+                    WHEN coa.normal_balance = 'debit' THEN COALESCE(SUM(CASE WHEN je.status = 'posted' THEN jed.debit - jed.credit ELSE 0 END), 0)
+                    ELSE COALESCE(SUM(CASE WHEN je.status = 'posted' THEN jed.credit - jed.debit ELSE 0 END), 0)
                 END AS balance
             FROM accounting_chart_of_accounts coa
             JOIN accounting_account_types at ON at.id = coa.account_type_id
             LEFT JOIN accounting_journal_entry_lines jed ON jed.chart_of_account_id = coa.id
-            LEFT JOIN accounting_journal_entries je ON je.id = jed.journal_entry_id AND je.status = 'posted'
+            LEFT JOIN accounting_journal_entries je ON je.id = jed.journal_entry_id
             WHERE coa.is_active = 1 OR je.id IS NOT NULL
             GROUP BY coa.id, coa.account_code, coa.account_name, at.name, at.report_group, coa.normal_balance
         SQL);

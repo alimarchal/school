@@ -22,16 +22,18 @@ Route::middleware(['web', 'auth', 'verified'])
     ->group(function (): void {
         Route::get('/', AccountingDashboardController::class)->name('dashboard');
 
-        Route::resource('account-types', AccountTypeController::class)->only(['index']);
-        Route::resource('currencies', CurrencyController::class)->only(['index']);
-        Route::resource('periods', AccountingPeriodController::class)->only(['index']);
+        Route::resource('account-types', AccountTypeController::class);
+        Route::resource('currencies', CurrencyController::class);
+        Route::resource('periods', AccountingPeriodController::class);
         Route::get('chart-of-accounts/tree', [ChartOfAccountController::class, 'tree'])->name('chart-of-accounts.tree');
-        Route::resource('chart-of-accounts', ChartOfAccountController::class)->only(['index']);
-        Route::resource('cost-centers', CostCenterController::class)->only(['index']);
-        Route::resource('bank-accounts', BankAccountController::class)->only(['index']);
-        Route::resource('reconciliations', ReconciliationController::class)->only(['index']);
+        Route::resource('chart-of-accounts', ChartOfAccountController::class)
+            ->except(['show'])
+            ->parameters(['chart-of-accounts' => 'chartOfAccount']);
+        Route::resource('cost-centers', CostCenterController::class);
+        Route::resource('bank-accounts', BankAccountController::class);
+        Route::resource('reconciliations', ReconciliationController::class);
         Route::resource('journal-entries', JournalEntryController::class)
-            ->only(['index', 'show', 'store'])
+            ->only(['index', 'create', 'show', 'store'])
             ->parameters(['journal-entries' => 'journalEntry']);
         Route::post('journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post'])->name('journal-entries.post');
         Route::post('journal-entries/{journalEntry}/reverse', [JournalEntryController::class, 'reverse'])->name('journal-entries.reverse');

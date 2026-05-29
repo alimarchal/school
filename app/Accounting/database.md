@@ -52,16 +52,13 @@ Implemented:
 - trial balance report query
 - balance sheet report query
 - income statement report query
-- basic Inertia pages
+- full web CRUD routes for setup resources
+- full API CRUD routes for setup resources
+- journal entry create/show/post/reverse/void API endpoints
+- reusable Inertia list/create/edit/show pages for setup resources
+- chart of accounts create/edit/list/tree pages
+- journal entry list/create/show pages
 - focused Pest tests
-
-Still to deepen later:
-
-- full create/edit Inertia forms for every accounting resource
-- complete API CRUD controllers for all resources
-- deeper policy middleware on each controller action
-- real MySQL and MariaDB CI matrix
-- export formats for reports
 
 ## Architecture
 
@@ -193,9 +190,19 @@ Route name prefix:
 
 Current API routes:
 
-- `GET /api/v1/accounting/chart-of-accounts`
+- `apiResource /api/v1/accounting/account-types`
+- `apiResource /api/v1/accounting/currencies`
+- `apiResource /api/v1/accounting/periods`
+- `apiResource /api/v1/accounting/chart-of-accounts`
+- `apiResource /api/v1/accounting/cost-centers`
+- `apiResource /api/v1/accounting/bank-accounts`
+- `apiResource /api/v1/accounting/reconciliations`
 - `GET /api/v1/accounting/journal-entries`
 - `POST /api/v1/accounting/journal-entries`
+- `GET /api/v1/accounting/journal-entries/{journal_entry}`
+- `POST /api/v1/accounting/journal-entries/{journalEntry}/post`
+- `POST /api/v1/accounting/journal-entries/{journalEntry}/reverse`
+- `POST /api/v1/accounting/journal-entries/{journalEntry}/void`
 
 Current auth middleware:
 
@@ -223,6 +230,18 @@ API rules:
 API controller namespace:
 
 - `App\Accounting\Http\Controllers\Api`
+
+API controllers:
+
+- `SimpleAccountingApiController`
+- `AccountTypeApiController`
+- `CurrencyApiController`
+- `AccountingPeriodApiController`
+- `ChartOfAccountApiController`
+- `CostCenterApiController`
+- `BankAccountApiController`
+- `ReconciliationApiController`
+- `JournalEntryApiController`
 
 API resources:
 
@@ -365,6 +384,25 @@ Database objects currently cover:
 - trial balance view
 - balance sheet view
 - income statement view
+- posted-only report totals so draft journal lines do not leak into trial balance, balance sheet, or income statement
+
+Verified database engines:
+
+- PostgreSQL using `.env` `DB_CONNECTION=pgsql`, `DB_DATABASE=school`
+- MariaDB using command-level override `DB_CONNECTION=mariadb`, `DB_DATABASE=school`
+- MySQL using command-level override `DB_CONNECTION=mysql`, `DB_DATABASE=sch_mysql`
+
+Do not permanently uncomment alternate database blocks in `.env` just to test. Prefer command-level overrides:
+
+```bash
+DB_CONNECTION=mariadb DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=school DB_USERNAME=root DB_PASSWORD= php artisan migrate:fresh --seed --no-interaction
+DB_CONNECTION=mariadb DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=school DB_USERNAME=root DB_PASSWORD= php artisan accounting:install --no-interaction
+DB_CONNECTION=mariadb DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=school DB_USERNAME=root DB_PASSWORD= php artisan accounting:verify --no-interaction
+
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=sch_mysql DB_USERNAME=root DB_PASSWORD= php artisan migrate:fresh --seed --no-interaction
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=sch_mysql DB_USERNAME=root DB_PASSWORD= php artisan accounting:install --no-interaction
+DB_CONNECTION=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=sch_mysql DB_USERNAME=root DB_PASSWORD= php artisan accounting:verify --no-interaction
+```
 
 ## General Ledger
 
@@ -400,9 +438,14 @@ Current pages:
 
 - `dashboard.tsx`
 - `simple-index.tsx`
+- `resources/index.tsx`
+- `resources/form.tsx`
+- `resources/show.tsx`
 - `chart-of-accounts/index.tsx`
+- `chart-of-accounts/form.tsx`
 - `chart-of-accounts/tree.tsx`
 - `journal-entries/index.tsx`
+- `journal-entries/form.tsx`
 - `journal-entries/show.tsx`
 - `reports/general-ledger.tsx`
 - `reports/trial-balance.tsx`
@@ -422,6 +465,7 @@ UI rules:
 Current focused accounting tests:
 
 - `tests/Feature/Accounting/AccountingInstallTest.php`
+- `tests/Feature/Accounting/AccountingApiTest.php`
 - `tests/Feature/Accounting/JournalEntryPostingTest.php`
 
 Covered:
@@ -434,6 +478,9 @@ Covered:
 - group account posting rejection
 - journal reversal
 - closed period posting rejection
+- versioned API chart of accounts index
+- versioned API chart of accounts route-model show
+- versioned API journal validation errors
 
 Verification commands:
 
@@ -449,12 +496,20 @@ npm run lint:check
 
 Last known verification:
 
-- full Pest suite: 47 passed, 160 assertions
-- accounting Pest slice: 8 passed, 24 assertions
+- full Pest suite: 50 passed, 167 assertions
+- accounting Pest slice: 11 passed, 31 assertions
 - TypeScript check: passed
 - ESLint check: passed
 - Pint: passed
-- `accounting:install`: passed
+- PostgreSQL `migrate:fresh --seed`: passed
+- PostgreSQL `accounting:install`: passed
+- PostgreSQL `accounting:verify`: passed
+- MariaDB `migrate:fresh --seed`: passed
+- MariaDB `accounting:install`: passed
+- MariaDB `accounting:verify`: passed
+- MySQL `migrate:fresh --seed`: passed
+- MySQL `accounting:install`: passed
+- MySQL `accounting:verify`: passed
 
 ## Future Implementation Checklist
 

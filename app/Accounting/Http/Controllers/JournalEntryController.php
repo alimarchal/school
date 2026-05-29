@@ -4,6 +4,9 @@ namespace App\Accounting\Http\Controllers;
 
 use App\Accounting\Actions\VoidJournalEntryAction;
 use App\Accounting\Http\Requests\StoreJournalEntryRequest;
+use App\Accounting\Models\ChartOfAccount;
+use App\Accounting\Models\CostCenter;
+use App\Accounting\Models\Currency;
 use App\Accounting\Models\JournalEntry;
 use App\Accounting\Services\JournalEntryService;
 use App\Http\Controllers\Controller;
@@ -22,6 +25,27 @@ class JournalEntryController extends Controller
                 ->latest('entry_date')
                 ->paginate(25)
                 ->withQueryString(),
+        ]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('accounting/journal-entries/form', [
+            'action' => route('accounting.journal-entries.store'),
+            'accounts' => ChartOfAccount::query()
+                ->where('is_group', false)
+                ->where('is_active', true)
+                ->orderBy('account_code')
+                ->get(['id', 'account_code', 'account_name']),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_base')
+                ->orderBy('code')
+                ->get(['id', 'code', 'name', 'is_base']),
+            'costCenters' => CostCenter::query()
+                ->where('is_active', true)
+                ->orderBy('code')
+                ->get(['id', 'code', 'name']),
         ]);
     }
 
