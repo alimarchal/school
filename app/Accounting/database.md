@@ -59,12 +59,19 @@ Implemented:
 - read-only API routes for account balance snapshots
 - journal entry create/show/post/reverse/void API endpoints
 - journal entry draft update API endpoint
+- Sanctum API token support for external/mobile consumers
 - reusable Inertia list/create/edit/show pages for setup resources
 - chart of accounts create/edit/list/tree pages
 - journal entry list/create/show pages
 - journal entry edit page support through the shared form
 - searchable dropdowns for large accounting option sets
 - Spatie Query Builder filters on list screens
+- CSV/XLSX/PDF report exports
+- cash flow, aged receivables, aged payables, and account statement reports
+- bank reconciliation candidate matching and line reconciliation service
+- database audit triggers for PostgreSQL, MySQL, MariaDB, and SQLite test driver
+- year-end close transfer to retained earnings
+- simple account-code journal helper service
 - focused Pest tests
 
 ## Architecture
@@ -222,9 +229,10 @@ Current auth middleware:
 
 Recommended next step for third-party/mobile API consumers:
 
-- run Laravel's `php artisan install:api`
-- add Sanctum
-- switch accounting API middleware to `auth:sanctum`
+- Sanctum is installed.
+- `App\Models\User` uses `Laravel\Sanctum\HasApiTokens`.
+- Accounting API middleware defaults to `api,auth:sanctum`.
+- Set `ACCOUNTING_API_MIDDLEWARE=api,auth` only if you intentionally want session-authenticated local API calls.
 
 API rules:
 
@@ -297,6 +305,11 @@ Current web routes include:
 - trial balance
 - balance sheet
 - income statement
+- cash flow
+- aged receivables
+- aged payables
+- account statement
+- report exports in CSV/XLSX/PDF
 - audit logs
 
 ## Permissions
@@ -328,6 +341,10 @@ Seeded permissions include:
 - `reports.trial-balance.view`
 - `reports.balance-sheet.view`
 - `reports.income-statement.view`
+- `reports.cash-flow.view`
+- `reports.aged-receivables.view`
+- `reports.aged-payables.view`
+- `reports.account-statement.view`
 - `audit-logs.view`
 
 Every web and API accounting route is protected with explicit Laravel `can:*` middleware. Permissions are checked per action, so removing `journal-entries.post` only blocks posting, removing `chart-of-accounts.update` only blocks edit/update, and removing `accounting.view` blocks the accounting dashboard.
@@ -412,6 +429,7 @@ Database objects currently cover:
 - balance sheet view
 - income statement view
 - posted-only report totals so draft journal lines do not leak into trial balance, balance sheet, or income statement
+- database audit triggers for critical accounting tables
 
 Verified database engines:
 
@@ -454,7 +472,7 @@ Future GL enhancements:
 - running balance per row
 - cost center filter
 - currency filter
-- XLSX/PDF export
+- richer XLSX/PDF styling
 
 ## Inertia Pages
 
@@ -479,6 +497,8 @@ Current pages:
 - `reports/trial-balance.tsx`
 - `reports/balance-sheet.tsx`
 - `reports/income-statement.tsx`
+- `reports/table.tsx`
+- `reconciliations/match.tsx`
 
 UI rules:
 
@@ -517,6 +537,12 @@ Covered:
 - CRUD/report URL smoke coverage
 - COA and journal filter URL smoke coverage
 - draft journal edit/update flow
+- CSV/XLSX/PDF export smoke coverage
+- simple expense helper coverage
+- bank reconciliation matching coverage
+- database audit trigger coverage
+- fiscal year close coverage
+- additional report route coverage
 
 Verification commands:
 
@@ -532,8 +558,8 @@ npm run lint:check
 
 Last known verification:
 
-- full Pest suite: 78 passed, 203 assertions
-- accounting Pest slice: 39 passed, 67 assertions
+- full Pest suite: 89 passed, 220 assertions
+- accounting Pest slice: 50 passed, 84 assertions
 - TypeScript check: passed
 - ESLint check: passed
 - Pint: passed

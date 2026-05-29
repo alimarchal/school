@@ -22,6 +22,7 @@ class PostgresAccountingDatabaseObjects implements AccountingDatabaseObjects
         DB::statement('ALTER TABLE accounting_journal_entry_lines DROP CONSTRAINT IF EXISTS acct_lines_debit_credit_chk');
         DB::statement('ALTER TABLE accounting_journal_entry_lines ADD CONSTRAINT acct_lines_debit_credit_chk CHECK ((debit > 0 AND credit = 0) OR (credit > 0 AND debit = 0))');
 
+        $this->createAuditTriggers();
         $this->createViews();
     }
 
@@ -31,7 +32,69 @@ class PostgresAccountingDatabaseObjects implements AccountingDatabaseObjects
         DB::statement('DROP VIEW IF EXISTS vw_accounting_balance_sheet');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_trial_balance');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_general_ledger');
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_trigger ON {$table}");
+        }
+        DB::statement('DROP FUNCTION IF EXISTS accounting_audit_trigger()');
         DB::statement('DROP INDEX IF EXISTS acct_currencies_single_base_idx');
+    }
+
+    private function createAuditTriggers(): void
+    {
+        DB::statement(<<<'SQL'
+            CREATE OR REPLACE FUNCTION accounting_audit_trigger()
+            RETURNS trigger AS $$
+            DECLARE
+                row_id bigint;
+            BEGIN
+                row_id := CASE
+                    WHEN TG_OP = 'DELETE' THEN (to_jsonb(OLD)->>'id')::bigint
+                    ELSE (to_jsonb(NEW)->>'id')::bigint
+                END;
+
+                INSERT INTO accounting_audit_logs (
+                    table_name,
+                    record_id,
+                    action,
+                    old_values,
+                    new_values,
+                    changed_fields,
+                    metadata,
+                    created_at
+                ) VALUES (
+                    TG_TABLE_NAME,
+                    row_id,
+                    LOWER(TG_OP),
+                    CASE WHEN TG_OP IN ('UPDATE', 'DELETE') THEN to_jsonb(OLD) ELSE NULL END,
+                    CASE WHEN TG_OP IN ('INSERT', 'UPDATE') THEN to_jsonb(NEW) ELSE NULL END,
+                    NULL,
+                    jsonb_build_object('source', 'database_trigger'),
+                    now()
+                );
+
+                RETURN COALESCE(NEW, OLD);
+            END;
+            $$ LANGUAGE plpgsql;
+        SQL);
+
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_trigger ON {$table}");
+            DB::statement("CREATE TRIGGER {$table}_audit_trigger AFTER INSERT OR UPDATE OR DELETE ON {$table} FOR EACH ROW EXECUTE FUNCTION accounting_audit_trigger()");
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function auditedTables(): array
+    {
+        return [
+            'accounting_currencies',
+            'accounting_periods',
+            'accounting_chart_of_accounts',
+            'accounting_journal_entries',
+            'accounting_journal_entry_lines',
+        ];
     }
 
     private function createViews(): void

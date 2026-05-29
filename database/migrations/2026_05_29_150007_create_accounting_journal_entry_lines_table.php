@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('credit', 18, 2)->default(0);
             $table->string('description')->nullable();
             $table->enum('reconciliation_status', ['unreconciled', 'cleared', 'reconciled'])->default('unreconciled');
+            $table->unsignedBigInteger('reconciliation_id')->nullable();
             $table->timestamp('reconciled_at')->nullable();
             $table->foreignId('reconciled_by')->nullable()->constrained('users', indexName: 'acct_lines_reconciled_by_fk')->nullOnDelete();
             $table->timestamps();
@@ -26,6 +27,7 @@ return new class extends Migration
             $table->index(['chart_of_account_id', 'journal_entry_id'], 'acct_lines_account_journal_idx');
             $table->index(['cost_center_id', 'journal_entry_id'], 'acct_lines_cost_center_journal_idx');
             $table->index('reconciliation_status', 'acct_lines_reconciliation_idx');
+            $table->index(['reconciliation_id', 'reconciliation_status'], 'acct_lines_reconciliation_status_idx');
         });
     }
 

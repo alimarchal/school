@@ -23,6 +23,10 @@ export default function AccountingDashboard({ summary }: Props) {
         { title: 'Trial Balance', href: '/accounting/reports/trial-balance', icon: BarChart3 },
         { title: 'Balance Sheet', href: '/accounting/reports/balance-sheet', icon: BarChart3 },
         { title: 'Income Statement', href: '/accounting/reports/income-statement', icon: BarChart3 },
+        { title: 'Cash Flow', href: '/accounting/reports/cash-flow', icon: BarChart3 },
+        { title: 'Aged Receivables', href: '/accounting/reports/aged-receivables', icon: BarChart3 },
+        { title: 'Aged Payables', href: '/accounting/reports/aged-payables', icon: BarChart3 },
+        { title: 'Account Statement', href: '/accounting/reports/account-statement', icon: FileText },
         { title: 'Audit Logs', href: '/accounting/audit-logs', icon: FileText },
     ];
 

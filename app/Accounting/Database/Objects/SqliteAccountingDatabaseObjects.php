@@ -9,6 +9,7 @@ class SqliteAccountingDatabaseObjects implements AccountingDatabaseObjects
     public function sync(): void
     {
         $this->drop();
+        $this->createAuditTriggers();
 
         DB::statement(<<<'SQL'
             CREATE VIEW IF NOT EXISTS vw_accounting_general_ledger AS
@@ -69,5 +70,30 @@ class SqliteAccountingDatabaseObjects implements AccountingDatabaseObjects
         DB::statement('DROP VIEW IF EXISTS vw_accounting_balance_sheet');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_trial_balance');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_general_ledger');
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_update");
+        }
+    }
+
+    private function createAuditTriggers(): void
+    {
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_update");
+            DB::statement("CREATE TRIGGER {$table}_audit_update AFTER UPDATE ON {$table} BEGIN INSERT INTO accounting_audit_logs (table_name, record_id, action, old_values, new_values, metadata, created_at) VALUES ('{$table}', NEW.id, 'update', json_object('id', OLD.id), json_object('id', NEW.id), json_object('source', 'database_trigger'), datetime('now')); END");
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function auditedTables(): array
+    {
+        return [
+            'accounting_currencies',
+            'accounting_periods',
+            'accounting_chart_of_accounts',
+            'accounting_journal_entries',
+            'accounting_journal_entry_lines',
+        ];
     }
 }

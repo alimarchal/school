@@ -31,6 +31,10 @@ Main entry points:
 - Tax rates: `https://school.test/accounting/tax-rates`
 - Account balance snapshots: `https://school.test/accounting/account-balance-snapshots`
 - Reports: `https://school.test/accounting/reports/general-ledger`
+- Cash flow: `https://school.test/accounting/reports/cash-flow`
+- Aged receivables: `https://school.test/accounting/reports/aged-receivables`
+- Aged payables: `https://school.test/accounting/reports/aged-payables`
+- Account statement: `https://school.test/accounting/reports/account-statement`
 
 The main dashboard and sidebar show the Accounting link only when the logged-in user has `accounting.view`.
 
@@ -44,6 +48,16 @@ List pages use paginated queries. COA, journal entries, and reusable setup scree
 ```
 
 Journal entry create/edit screens use searchable account and cost center dropdowns. COA forms use searchable parent/type/currency dropdowns.
+
+Exports are available for reports:
+
+```text
+/accounting/reports/general-ledger/export/csv
+/accounting/reports/general-ledger/export/xlsx
+/accounting/reports/general-ledger/export/pdf
+/accounting/reports/trial-balance/export/xlsx
+/accounting/reports/balance-sheet/export/pdf
+```
 
 ## API Access
 
@@ -69,6 +83,24 @@ GET /api/v1/accounting/account-balance-snapshots
 ```
 
 API routes use the same permission names as web routes. A user without the matching permission receives `403 Forbidden`.
+
+The API is now Sanctum-ready. `laravel/sanctum` is installed and `App\Models\User` uses `HasApiTokens`. Accounting API middleware is configurable:
+
+```env
+ACCOUNTING_API_MIDDLEWARE=api,auth:sanctum
+```
+
+Create an API token for an external/mobile client:
+
+```php
+$token = $user->createToken('mobile-accounting')->plainTextToken;
+```
+
+Then send:
+
+```text
+Authorization: Bearer {token}
+```
 
 ## Permission Model
 
@@ -156,6 +188,55 @@ app(\App\Accounting\Actions\ReopenAccountingPeriodAction::class)->execute($perio
 ```
 
 Use stable account codes from `config/accounting.php` or `ChartOfAccount::where('account_code', ...)`; never hardcode numeric IDs.
+
+Simple account-code journal helper:
+
+```php
+$entry = app(\App\Accounting\Services\SimpleJournalService::class)->expense(
+    expenseAccountCode: '5104',
+    paidFromAccountCode: '1101',
+    amount: 100,
+    description: 'Stationery purchase',
+    reference: 'EXP-100',
+    post: true,
+);
+
+$entry = app(\App\Accounting\Services\SimpleJournalService::class)->createBalancedEntry(
+    debitAccountCode: '5104',
+    creditAccountCode: '1101',
+    amount: 100,
+    description: 'Any debit/credit entry',
+    reference: 'JV-100',
+    post: false,
+);
+```
+
+Year-end close:
+
+```php
+app(\App\Accounting\Actions\CloseFiscalYearAction::class)->execute($period);
+// or
+php artisan accounting:close-fiscal-year {period_id}
+```
+
+Bank reconciliation matching:
+
+```php
+$candidates = app(\App\Accounting\Services\BankReconciliationMatcher::class)->candidates($reconciliation);
+
+app(\App\Accounting\Services\BankReconciliationMatcher::class)->reconcile(
+    $reconciliation,
+    $candidates->pluck('id')->all(),
+);
+```
+
+Spatie permissions best practice used here:
+
+- assign permissions to roles by seeders
+- assign roles to users
+- check permission names through `can:*` route middleware and `user()->can()`
+- use direct user permissions only for exceptions
+- after changing permissions directly, call `app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions()`
 
 ## Verification
 

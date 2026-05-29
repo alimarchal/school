@@ -31,7 +31,7 @@ $apiResourceRoutes = function (string $uri, string $controller, string $routeNam
         ->middleware("can:{$permissionPrefix}.delete");
 };
 
-Route::middleware(['api', 'auth'])
+Route::middleware(config('accounting.api_middleware', ['api', 'auth']))
     ->prefix(config('accounting.api_prefix', 'api/accounting/v1'))
     ->name('api.accounting.')
     ->group(function () use ($apiResourceRoutes): void {

@@ -31,7 +31,7 @@ class CloseAccountingPeriodAction
                 'closed_by' => Auth::id(),
                 'closing_total_debits' => $totals->debits,
                 'closing_total_credits' => $totals->credits,
-                'closing_net_income' => (float) $totals->credits - (float) $totals->debits,
+                'closing_net_income' => $period->closing_net_income ?? (float) $totals->credits - (float) $totals->debits,
             ])->save();
 
             return $period->refresh();

@@ -8,6 +8,7 @@ class MySqlAccountingDatabaseObjects implements AccountingDatabaseObjects
 {
     public function sync(): void
     {
+        $this->createAuditTriggers();
         $this->createViews();
     }
 
@@ -17,6 +18,38 @@ class MySqlAccountingDatabaseObjects implements AccountingDatabaseObjects
         DB::statement('DROP VIEW IF EXISTS vw_accounting_balance_sheet');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_trial_balance');
         DB::statement('DROP VIEW IF EXISTS vw_accounting_general_ledger');
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_insert");
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_update");
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_delete");
+        }
+    }
+
+    protected function createAuditTriggers(): void
+    {
+        foreach ($this->auditedTables() as $table) {
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_insert");
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_update");
+            DB::statement("DROP TRIGGER IF EXISTS {$table}_audit_delete");
+
+            DB::unprepared("CREATE TRIGGER {$table}_audit_insert AFTER INSERT ON {$table} FOR EACH ROW INSERT INTO accounting_audit_logs (table_name, record_id, action, new_values, metadata, created_at) VALUES ('{$table}', NEW.id, 'insert', JSON_OBJECT('id', NEW.id), JSON_OBJECT('source', 'database_trigger'), NOW())");
+            DB::unprepared("CREATE TRIGGER {$table}_audit_update AFTER UPDATE ON {$table} FOR EACH ROW INSERT INTO accounting_audit_logs (table_name, record_id, action, old_values, new_values, metadata, created_at) VALUES ('{$table}', NEW.id, 'update', JSON_OBJECT('id', OLD.id), JSON_OBJECT('id', NEW.id), JSON_OBJECT('source', 'database_trigger'), NOW())");
+            DB::unprepared("CREATE TRIGGER {$table}_audit_delete AFTER DELETE ON {$table} FOR EACH ROW INSERT INTO accounting_audit_logs (table_name, record_id, action, old_values, metadata, created_at) VALUES ('{$table}', OLD.id, 'delete', JSON_OBJECT('id', OLD.id), JSON_OBJECT('source', 'database_trigger'), NOW())");
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function auditedTables(): array
+    {
+        return [
+            'accounting_currencies',
+            'accounting_periods',
+            'accounting_chart_of_accounts',
+            'accounting_journal_entries',
+            'accounting_journal_entry_lines',
+        ];
     }
 
     protected function createViews(): void

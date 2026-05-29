@@ -11,9 +11,14 @@ use App\Accounting\Http\Controllers\CostCenterController;
 use App\Accounting\Http\Controllers\CurrencyController;
 use App\Accounting\Http\Controllers\JournalEntryController;
 use App\Accounting\Http\Controllers\ReconciliationController;
+use App\Accounting\Http\Controllers\Reports\AccountStatementController;
+use App\Accounting\Http\Controllers\Reports\AgedPayablesController;
+use App\Accounting\Http\Controllers\Reports\AgedReceivablesController;
 use App\Accounting\Http\Controllers\Reports\BalanceSheetController;
+use App\Accounting\Http\Controllers\Reports\CashFlowController;
 use App\Accounting\Http\Controllers\Reports\GeneralLedgerController;
 use App\Accounting\Http\Controllers\Reports\IncomeStatementController;
+use App\Accounting\Http\Controllers\Reports\ReportExportController;
 use App\Accounting\Http\Controllers\Reports\TrialBalanceController;
 use App\Accounting\Http\Controllers\TaxCodeController;
 use App\Accounting\Http\Controllers\TaxRateController;
@@ -80,6 +85,12 @@ Route::middleware(['web', 'auth', 'verified'])
         $resourceRoutes('cost-centers', CostCenterController::class, 'cost-centers', 'cost-centers');
         $resourceRoutes('bank-accounts', BankAccountController::class, 'bank-accounts', 'bank-accounts');
         $resourceRoutes('reconciliations', ReconciliationController::class, 'reconciliations', 'reconciliations');
+        Route::get('reconciliations/{reconciliation}/match', [ReconciliationController::class, 'match'])
+            ->name('reconciliations.match')
+            ->middleware('can:reconciliations.update');
+        Route::post('reconciliations/{reconciliation}/reconcile', [ReconciliationController::class, 'reconcile'])
+            ->name('reconciliations.reconcile')
+            ->middleware('can:reconciliations.update');
         $resourceRoutes('tax-codes', TaxCodeController::class, 'tax-codes', 'tax-codes');
         $resourceRoutes('tax-rates', TaxRateController::class, 'tax-rates', 'tax-rates');
         Route::get('account-balance-snapshots', [AccountBalanceSnapshotController::class, 'index'])
@@ -129,6 +140,22 @@ Route::middleware(['web', 'auth', 'verified'])
         Route::get('reports/income-statement', IncomeStatementController::class)
             ->name('reports.income-statement')
             ->middleware('can:reports.income-statement.view');
+        Route::get('reports/cash-flow', CashFlowController::class)
+            ->name('reports.cash-flow')
+            ->middleware('can:reports.cash-flow.view');
+        Route::get('reports/aged-receivables', AgedReceivablesController::class)
+            ->name('reports.aged-receivables')
+            ->middleware('can:reports.aged-receivables.view');
+        Route::get('reports/aged-payables', AgedPayablesController::class)
+            ->name('reports.aged-payables')
+            ->middleware('can:reports.aged-payables.view');
+        Route::get('reports/account-statement', AccountStatementController::class)
+            ->name('reports.account-statement')
+            ->middleware('can:reports.account-statement.view');
+        Route::get('reports/{report}/export/{format}', ReportExportController::class)
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('reports.export')
+            ->middleware('can:accounting.view');
         Route::get('audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index')
             ->middleware('can:audit-logs.view');

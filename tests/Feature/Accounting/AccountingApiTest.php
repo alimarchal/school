@@ -3,6 +3,7 @@
 use App\Accounting\Database\Seeders\AccountingDatabaseSeeder;
 use App\Accounting\Models\ChartOfAccount;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 beforeEach(function (): void {
     $this->seed(AccountingDatabaseSeeder::class);
@@ -10,7 +11,7 @@ beforeEach(function (): void {
     $user = User::factory()->create();
     $user->assignRole('super-admin');
 
-    $this->actingAs($user);
+    Sanctum::actingAs($user);
 });
 
 it('returns chart of accounts through the versioned API', function (): void {

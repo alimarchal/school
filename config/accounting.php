@@ -3,6 +3,7 @@
 return [
     'route_prefix' => env('ACCOUNTING_ROUTE_PREFIX', 'accounting'),
     'api_prefix' => env('ACCOUNTING_API_PREFIX', 'api/v1/accounting'),
+    'api_middleware' => array_values(array_filter(explode(',', env('ACCOUNTING_API_MIDDLEWARE', 'api,auth:sanctum')))),
 
     'defaults' => [
         'currency_code' => env('ACCOUNTING_BASE_CURRENCY', 'PKR'),
@@ -65,6 +66,10 @@ return [
         'reports.trial-balance.view',
         'reports.balance-sheet.view',
         'reports.income-statement.view',
+        'reports.cash-flow.view',
+        'reports.aged-receivables.view',
+        'reports.aged-payables.view',
+        'reports.account-statement.view',
         'audit-logs.view',
     ],
 
@@ -97,6 +102,10 @@ return [
             'reports.trial-balance.view',
             'reports.balance-sheet.view',
             'reports.income-statement.view',
+            'reports.cash-flow.view',
+            'reports.aged-receivables.view',
+            'reports.aged-payables.view',
+            'reports.account-statement.view',
             'audit-logs.view',
         ],
         'viewer' => [
@@ -110,6 +119,10 @@ return [
             'reports.trial-balance.view',
             'reports.balance-sheet.view',
             'reports.income-statement.view',
+            'reports.cash-flow.view',
+            'reports.aged-receivables.view',
+            'reports.aged-payables.view',
+            'reports.account-statement.view',
         ],
     ],
 ];

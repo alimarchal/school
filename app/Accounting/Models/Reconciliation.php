@@ -3,6 +3,7 @@
 namespace App\Accounting\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Reconciliation extends AccountingModel
 {
@@ -33,5 +34,10 @@ class Reconciliation extends AccountingModel
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class, 'bank_account_id');
+    }
+
+    public function lines(): HasMany
+    {
+        return $this->hasMany(JournalEntryLine::class, 'reconciliation_id');
     }
 }

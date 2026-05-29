@@ -3,6 +3,7 @@
 use App\Accounting\Database\Seeders\AccountingDatabaseSeeder;
 use App\Accounting\Models\AccountType;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\PermissionRegistrar;
 
 beforeEach(function (): void {
@@ -71,7 +72,9 @@ it('blocks api reads without the matching permission', function (): void {
     $user = User::factory()->create();
     $user->givePermissionTo('accounting.view');
 
-    $this->actingAs($user)
+    Sanctum::actingAs($user);
+
+    $this
         ->getJson('/api/v1/accounting/chart-of-accounts')
         ->assertForbidden();
 });
@@ -80,7 +83,9 @@ it('allows api reads with the matching permission', function (): void {
     $user = User::factory()->create();
     $user->givePermissionTo('chart-of-accounts.view');
 
-    $this->actingAs($user)
+    Sanctum::actingAs($user);
+
+    $this
         ->getJson('/api/v1/accounting/chart-of-accounts')
         ->assertSuccessful();
 });

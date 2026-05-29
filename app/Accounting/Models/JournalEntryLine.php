@@ -18,6 +18,7 @@ class JournalEntryLine extends Model
         'credit',
         'description',
         'reconciliation_status',
+        'reconciliation_id',
         'reconciled_at',
         'reconciled_by',
     ];
@@ -44,5 +45,10 @@ class JournalEntryLine extends Model
     public function costCenter(): BelongsTo
     {
         return $this->belongsTo(CostCenter::class, 'cost_center_id');
+    }
+
+    public function reconciliation(): BelongsTo
+    {
+        return $this->belongsTo(Reconciliation::class, 'reconciliation_id');
     }
 }

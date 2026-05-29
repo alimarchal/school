@@ -3,8 +3,13 @@
 namespace App\Accounting\Http\Controllers;
 
 use App\Accounting\Models\Reconciliation;
+use App\Accounting\Services\BankReconciliationMatcher;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ReconciliationController extends SimpleAccountingResourceController
 {
@@ -43,5 +48,25 @@ class ReconciliationController extends SimpleAccountingResourceController
             'book_balance' => ['required', 'numeric'],
             'status' => ['required', Rule::in(['draft', 'completed', 'void'])],
         ];
+    }
+
+    public function match(Reconciliation $reconciliation, BankReconciliationMatcher $matcher): Response
+    {
+        return Inertia::render('accounting/reconciliations/match', [
+            'reconciliation' => $reconciliation->load('bankAccount'),
+            'candidates' => $matcher->candidates($reconciliation),
+        ]);
+    }
+
+    public function reconcile(Request $request, Reconciliation $reconciliation, BankReconciliationMatcher $matcher): RedirectResponse
+    {
+        $validated = $request->validate([
+            'line_ids' => ['required', 'array', 'min:1'],
+            'line_ids.*' => ['integer', 'exists:accounting_journal_entry_lines,id'],
+        ]);
+
+        $matcher->reconcile($reconciliation, $validated['line_ids']);
+
+        return to_route('accounting.reconciliations.show', $reconciliation)->with('success', 'Reconciliation lines matched.');
     }
 }

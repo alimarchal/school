@@ -2,6 +2,7 @@
 
 namespace App\Accounting;
 
+use App\Accounting\Console\Commands\AccountingCloseFiscalYearCommand;
 use App\Accounting\Console\Commands\AccountingClosePeriodCommand;
 use App\Accounting\Console\Commands\AccountingHealthCheckCommand;
 use App\Accounting\Console\Commands\AccountingInstallCommand;
@@ -35,6 +36,7 @@ class AccountingServiceProvider extends ServiceProvider
                 AccountingVerifyCommand::class,
                 AccountingHealthCheckCommand::class,
                 AccountingRebuildSnapshotsCommand::class,
+                AccountingCloseFiscalYearCommand::class,
                 AccountingClosePeriodCommand::class,
                 AccountingOpenPeriodCommand::class,
             ]);
