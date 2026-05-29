@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 abstract class SimpleAccountingApiController extends Controller
@@ -26,6 +27,7 @@ abstract class SimpleAccountingApiController extends Controller
 
         return JsonResource::collection(
             QueryBuilder::for($model::query())
+                ->allowedFilters(...$this->allowedFilters())
                 ->defaultSort('-id')
                 ->paginate()
                 ->withQueryString()
@@ -68,5 +70,18 @@ abstract class SimpleAccountingApiController extends Controller
         $model = $this->model();
 
         return $model::query()->findOrFail($record);
+    }
+
+    /**
+     * @return array<int, AllowedFilter>
+     */
+    protected function allowedFilters(): array
+    {
+        return [
+            AllowedFilter::partial('code'),
+            AllowedFilter::partial('name'),
+            AllowedFilter::partial('description'),
+            AllowedFilter::exact('is_active'),
+        ];
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 abstract class SimpleAccountingResourceController extends Controller
@@ -37,6 +38,7 @@ abstract class SimpleAccountingResourceController extends Controller
             'title' => $this->title(),
             'routeName' => $this->routeName(),
             'records' => QueryBuilder::for($model::query())
+                ->allowedFilters(...$this->allowedFilters())
                 ->defaultSort('-id')
                 ->paginate(25)
                 ->withQueryString(),
@@ -45,6 +47,9 @@ abstract class SimpleAccountingResourceController extends Controller
                 ->pluck('name')
                 ->prepend('id')
                 ->values(),
+            'fields' => $this->fields(),
+            'filters' => request()->input('filter', []),
+            'readOnly' => $this->readOnly(),
         ]);
     }
 
@@ -128,6 +133,11 @@ abstract class SimpleAccountingResourceController extends Controller
         return $model::query()->findOrFail($record);
     }
 
+    protected function readOnly(): bool
+    {
+        return false;
+    }
+
     private function normalizeCheckboxes(Request $request): void
     {
         $checkboxes = collect($this->fields())
@@ -137,5 +147,21 @@ abstract class SimpleAccountingResourceController extends Controller
             ->all();
 
         $request->merge($checkboxes);
+    }
+
+    /**
+     * @return array<int, AllowedFilter>
+     */
+    private function allowedFilters(): array
+    {
+        return collect($this->fields())
+            ->filter(fn (array $field): bool => $field['filter'] ?? $field['table'] ?? false)
+            ->map(function (array $field): AllowedFilter {
+                return in_array($field['type'], ['checkbox', 'select', 'number', 'date'], true)
+                    ? AllowedFilter::exact($field['name'])
+                    : AllowedFilter::partial($field['name']);
+            })
+            ->values()
+            ->all();
     }
 }

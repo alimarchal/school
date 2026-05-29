@@ -9,13 +9,26 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class ChartOfAccountApiController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
         return AccountResource::collection(
-            ChartOfAccount::query()->with(['accountType', 'currency'])->orderBy('account_code')->paginate()
+            QueryBuilder::for(ChartOfAccount::query()->with(['accountType', 'currency']))
+                ->allowedFilters(...[
+                    AllowedFilter::partial('account_code'),
+                    AllowedFilter::partial('account_name'),
+                    AllowedFilter::exact('account_type_id'),
+                    AllowedFilter::exact('currency_id'),
+                    AllowedFilter::exact('is_group'),
+                    AllowedFilter::exact('is_active'),
+                ])
+                ->orderBy('account_code')
+                ->paginate()
+                ->withQueryString()
         );
     }
 

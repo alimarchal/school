@@ -19,7 +19,7 @@ class ChartOfAccountController extends Controller
     public function index(): Response
     {
         $accounts = QueryBuilder::for(ChartOfAccount::query()->with(['accountType', 'currency', 'parent']))
-            ->allowedFilters([
+            ->allowedFilters(...[
                 AllowedFilter::partial('account_code'),
                 AllowedFilter::partial('account_name'),
                 AllowedFilter::exact('account_type_id'),
@@ -33,6 +33,9 @@ class ChartOfAccountController extends Controller
 
         return Inertia::render('accounting/chart-of-accounts/index', [
             'accounts' => $accounts,
+            'filters' => request()->input('filter', []),
+            'accountTypes' => AccountType::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['id', 'code', 'name']),
         ]);
     }
 

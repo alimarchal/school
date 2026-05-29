@@ -1,5 +1,6 @@
 <?php
 
+use App\Accounting\Http\Controllers\AccountBalanceSnapshotController;
 use App\Accounting\Http\Controllers\AccountingDashboardController;
 use App\Accounting\Http\Controllers\AccountingPeriodController;
 use App\Accounting\Http\Controllers\AccountTypeController;
@@ -14,6 +15,8 @@ use App\Accounting\Http\Controllers\Reports\BalanceSheetController;
 use App\Accounting\Http\Controllers\Reports\GeneralLedgerController;
 use App\Accounting\Http\Controllers\Reports\IncomeStatementController;
 use App\Accounting\Http\Controllers\Reports\TrialBalanceController;
+use App\Accounting\Http\Controllers\TaxCodeController;
+use App\Accounting\Http\Controllers\TaxRateController;
 use Illuminate\Support\Facades\Route;
 
 $resourceRoutes = function (string $uri, string $controller, string $routeName, string $permissionPrefix): void {
@@ -77,6 +80,14 @@ Route::middleware(['web', 'auth', 'verified'])
         $resourceRoutes('cost-centers', CostCenterController::class, 'cost-centers', 'cost-centers');
         $resourceRoutes('bank-accounts', BankAccountController::class, 'bank-accounts', 'bank-accounts');
         $resourceRoutes('reconciliations', ReconciliationController::class, 'reconciliations', 'reconciliations');
+        $resourceRoutes('tax-codes', TaxCodeController::class, 'tax-codes', 'tax-codes');
+        $resourceRoutes('tax-rates', TaxRateController::class, 'tax-rates', 'tax-rates');
+        Route::get('account-balance-snapshots', [AccountBalanceSnapshotController::class, 'index'])
+            ->name('account-balance-snapshots.index')
+            ->middleware('can:account-balance-snapshots.view');
+        Route::get('account-balance-snapshots/{record}', [AccountBalanceSnapshotController::class, 'show'])
+            ->name('account-balance-snapshots.show')
+            ->middleware('can:account-balance-snapshots.view');
 
         Route::get('journal-entries', [JournalEntryController::class, 'index'])
             ->name('journal-entries.index')
@@ -87,6 +98,12 @@ Route::middleware(['web', 'auth', 'verified'])
         Route::post('journal-entries', [JournalEntryController::class, 'store'])
             ->name('journal-entries.store')
             ->middleware('can:journal-entries.create');
+        Route::get('journal-entries/{journalEntry}/edit', [JournalEntryController::class, 'edit'])
+            ->name('journal-entries.edit')
+            ->middleware('can:journal-entries.update');
+        Route::match(['put', 'patch'], 'journal-entries/{journalEntry}', [JournalEntryController::class, 'update'])
+            ->name('journal-entries.update')
+            ->middleware('can:journal-entries.update');
         Route::get('journal-entries/{journalEntry}', [JournalEntryController::class, 'show'])
             ->name('journal-entries.show')
             ->middleware('can:journal-entries.view');

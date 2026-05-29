@@ -1,5 +1,6 @@
 <?php
 
+use App\Accounting\Http\Controllers\Api\AccountBalanceSnapshotApiController;
 use App\Accounting\Http\Controllers\Api\AccountingPeriodApiController;
 use App\Accounting\Http\Controllers\Api\AccountTypeApiController;
 use App\Accounting\Http\Controllers\Api\BankAccountApiController;
@@ -8,6 +9,8 @@ use App\Accounting\Http\Controllers\Api\CostCenterApiController;
 use App\Accounting\Http\Controllers\Api\CurrencyApiController;
 use App\Accounting\Http\Controllers\Api\JournalEntryApiController;
 use App\Accounting\Http\Controllers\Api\ReconciliationApiController;
+use App\Accounting\Http\Controllers\Api\TaxCodeApiController;
+use App\Accounting\Http\Controllers\Api\TaxRateApiController;
 use Illuminate\Support\Facades\Route;
 
 $apiResourceRoutes = function (string $uri, string $controller, string $routeName, string $permissionPrefix): void {
@@ -55,6 +58,14 @@ Route::middleware(['api', 'auth'])
         $apiResourceRoutes('cost-centers', CostCenterApiController::class, 'cost-centers', 'cost-centers');
         $apiResourceRoutes('bank-accounts', BankAccountApiController::class, 'bank-accounts', 'bank-accounts');
         $apiResourceRoutes('reconciliations', ReconciliationApiController::class, 'reconciliations', 'reconciliations');
+        $apiResourceRoutes('tax-codes', TaxCodeApiController::class, 'tax-codes', 'tax-codes');
+        $apiResourceRoutes('tax-rates', TaxRateApiController::class, 'tax-rates', 'tax-rates');
+        Route::get('account-balance-snapshots', [AccountBalanceSnapshotApiController::class, 'index'])
+            ->name('account-balance-snapshots.index')
+            ->middleware('can:account-balance-snapshots.view');
+        Route::get('account-balance-snapshots/{record}', [AccountBalanceSnapshotApiController::class, 'show'])
+            ->name('account-balance-snapshots.show')
+            ->middleware('can:account-balance-snapshots.view');
 
         Route::get('journal-entries', [JournalEntryApiController::class, 'index'])
             ->name('journal-entries.index')
@@ -65,6 +76,9 @@ Route::middleware(['api', 'auth'])
         Route::get('journal-entries/{journalEntry}', [JournalEntryApiController::class, 'show'])
             ->name('journal-entries.show')
             ->middleware('can:journal-entries.view');
+        Route::match(['put', 'patch'], 'journal-entries/{journalEntry}', [JournalEntryApiController::class, 'update'])
+            ->name('journal-entries.update')
+            ->middleware('can:journal-entries.update');
         Route::post('journal-entries/{journalEntry}/post', [JournalEntryApiController::class, 'post'])
             ->name('journal-entries.post')
             ->middleware('can:journal-entries.post');

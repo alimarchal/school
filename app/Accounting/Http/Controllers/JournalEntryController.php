@@ -4,6 +4,7 @@ namespace App\Accounting\Http\Controllers;
 
 use App\Accounting\Actions\VoidJournalEntryAction;
 use App\Accounting\Http\Requests\StoreJournalEntryRequest;
+use App\Accounting\Http\Requests\UpdateJournalEntryRequest;
 use App\Accounting\Models\ChartOfAccount;
 use App\Accounting\Models\CostCenter;
 use App\Accounting\Models\Currency;
@@ -14,17 +15,34 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class JournalEntryController extends Controller
 {
     public function index(): Response
     {
+        $entries = QueryBuilder::for(JournalEntry::query()->with(['currency', 'accountingPeriod']))
+            ->allowedFilters(...[
+                AllowedFilter::partial('reference'),
+                AllowedFilter::partial('description'),
+                AllowedFilter::exact('status'),
+                AllowedFilter::exact('currency_id'),
+                AllowedFilter::exact('accounting_period_id'),
+            ])
+            ->when(request('filter.entry_date_from'), fn ($query, $date) => $query->whereDate('entry_date', '>=', $date))
+            ->when(request('filter.entry_date_to'), fn ($query, $date) => $query->whereDate('entry_date', '<=', $date))
+            ->latest('entry_date')
+            ->paginate(25)
+            ->withQueryString();
+
         return Inertia::render('accounting/journal-entries/index', [
-            'entries' => JournalEntry::query()
-                ->with(['currency', 'accountingPeriod'])
-                ->latest('entry_date')
-                ->paginate(25)
-                ->withQueryString(),
+            'entries' => $entries,
+            'filters' => request()->input('filter', []),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->orderBy('code')
+                ->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -32,6 +50,38 @@ class JournalEntryController extends Controller
     {
         return Inertia::render('accounting/journal-entries/form', [
             'action' => route('accounting.journal-entries.store'),
+            'method' => 'post',
+            'title' => 'Create Journal Entry',
+            'entry' => null,
+            'accounts' => ChartOfAccount::query()
+                ->where('is_group', false)
+                ->where('is_active', true)
+                ->orderBy('account_code')
+                ->get(['id', 'account_code', 'account_name']),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_base')
+                ->orderBy('code')
+                ->get(['id', 'code', 'name', 'is_base']),
+            'costCenters' => CostCenter::query()
+                ->where('is_active', true)
+                ->orderBy('code')
+                ->get(['id', 'code', 'name']),
+        ]);
+    }
+
+    public function edit(JournalEntry $journalEntry): Response|RedirectResponse
+    {
+        if ($journalEntry->status !== 'draft') {
+            return to_route('accounting.journal-entries.show', $journalEntry)
+                ->with('error', 'Only draft journal entries can be edited.');
+        }
+
+        return Inertia::render('accounting/journal-entries/form', [
+            'action' => route('accounting.journal-entries.update', $journalEntry),
+            'method' => 'put',
+            'title' => 'Edit Journal Entry',
+            'entry' => $journalEntry->load('lines'),
             'accounts' => ChartOfAccount::query()
                 ->where('is_group', false)
                 ->where('is_active', true)
@@ -61,6 +111,17 @@ class JournalEntryController extends Controller
         $entry = $service->create($request->validated());
 
         return to_route('accounting.journal-entries.show', $entry)->with('success', 'Journal entry created.');
+    }
+
+    public function update(UpdateJournalEntryRequest $request, JournalEntry $journalEntry, JournalEntryService $service): RedirectResponse
+    {
+        try {
+            $entry = $service->updateDraft($journalEntry, $request->validated());
+        } catch (\DomainException $exception) {
+            return to_route('accounting.journal-entries.show', $journalEntry)->with('error', $exception->getMessage());
+        }
+
+        return to_route('accounting.journal-entries.show', $entry)->with('success', 'Journal entry updated.');
     }
 
     public function post(JournalEntry $journalEntry, JournalEntryService $service): RedirectResponse

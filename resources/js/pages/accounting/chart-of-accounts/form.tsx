@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Save } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { SearchableSelect } from '@/components/accounting/searchable-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,6 +43,22 @@ type Props = {
 };
 
 export default function ChartOfAccountForm({ title, action, method, record, accountTypes, currencies, parents }: Props) {
+    const parentOptions = [
+        { value: 'none', label: 'No parent' },
+        ...parents.map((parent) => ({
+            value: String(parent.id),
+            label: `${parent.account_code} - ${parent.account_name}`,
+        })),
+    ];
+    const accountTypeOptions = accountTypes.map((type) => ({
+        value: String(type.id),
+        label: `${type.name} (${type.normal_balance})`,
+    }));
+    const currencyOptions = currencies.map((currency) => ({
+        value: String(currency.id),
+        label: `${currency.code} - ${currency.name}`,
+    }));
+
     const form = useForm({
         parent_id: record?.parent_id ? String(record.parent_id) : 'none',
         account_type_id: record?.account_type_id ? String(record.account_type_id) : '',
@@ -85,53 +102,19 @@ export default function ChartOfAccountForm({ title, action, method, record, acco
                 <form onSubmit={submit} className="grid max-w-5xl grid-cols-1 gap-4 rounded-lg border p-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">
                         <Label>Parent Account</Label>
-                        <Select value={form.data.parent_id} onValueChange={(value) => form.setData('parent_id', value)}>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select parent" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">No parent</SelectItem>
-                                {parents.map((parent) => (
-                                    <SelectItem key={parent.id} value={String(parent.id)}>
-                                        {parent.account_code} - {parent.account_name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect value={form.data.parent_id} options={parentOptions} placeholder="Search parent account" onChange={(value) => form.setData('parent_id', value)} />
                         <InputError message={form.errors.parent_id} />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <Label>Account Type</Label>
-                        <Select value={form.data.account_type_id} onValueChange={(value) => form.setData('account_type_id', value)}>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select account type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {accountTypes.map((type) => (
-                                    <SelectItem key={type.id} value={String(type.id)}>
-                                        {type.name} ({type.normal_balance})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect value={form.data.account_type_id} options={accountTypeOptions} placeholder="Search account type" onChange={(value) => form.setData('account_type_id', value)} />
                         <InputError message={form.errors.account_type_id} />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <Label>Currency</Label>
-                        <Select value={form.data.currency_id} onValueChange={(value) => form.setData('currency_id', value)}>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select currency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currencies.map((currency) => (
-                                    <SelectItem key={currency.id} value={String(currency.id)}>
-                                        {currency.code} - {currency.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect value={form.data.currency_id} options={currencyOptions} placeholder="Search currency" onChange={(value) => form.setData('currency_id', value)} />
                         <InputError message={form.errors.currency_id} />
                     </div>
 

@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Plus, Save, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { SearchableSelect } from '@/components/accounting/searchable-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,6 +38,22 @@ type JournalLine = {
 
 type Props = {
     action: string;
+    method?: 'post' | 'put';
+    title?: string;
+    entry?: {
+        entry_date: string;
+        currency_id: number | null;
+        fx_rate_to_base: string | number;
+        reference: string | null;
+        description: string | null;
+        lines: Array<{
+            chart_of_account_id: number;
+            cost_center_id: number | null;
+            debit: string | number;
+            credit: string | number;
+            description: string | null;
+        }>;
+    } | null;
     accounts: Account[];
     currencies: Currency[];
     costCenters: CostCenter[];
@@ -50,18 +67,36 @@ const emptyLine = (): JournalLine => ({
     description: '',
 });
 
-export default function JournalEntryForm({ action, accounts, currencies, costCenters }: Props) {
+export default function JournalEntryForm({ action, method = 'post', title = 'Create Journal Entry', entry, accounts, currencies, costCenters }: Props) {
     const baseCurrency = currencies.find((currency) => currency.is_base) ?? currencies[0];
     const today = new Date().toISOString().slice(0, 10);
+    const accountOptions = accounts.map((account) => ({
+        value: String(account.id),
+        label: `${account.account_code} - ${account.account_name}`,
+    }));
+    const costCenterOptions = [
+        { value: 'none', label: 'None' },
+        ...costCenters.map((costCenter) => ({
+            value: String(costCenter.id),
+            label: `${costCenter.code} - ${costCenter.name}`,
+        })),
+    ];
 
     const form = useForm({
-        entry_date: today,
-        currency_id: baseCurrency ? String(baseCurrency.id) : '',
-        fx_rate_to_base: '1',
-        reference: '',
-        description: '',
+        entry_date: entry?.entry_date?.slice(0, 10) ?? today,
+        currency_id: entry?.currency_id ? String(entry.currency_id) : baseCurrency ? String(baseCurrency.id) : '',
+        fx_rate_to_base: entry?.fx_rate_to_base ? String(entry.fx_rate_to_base) : '1',
+        reference: entry?.reference ?? '',
+        description: entry?.description ?? '',
         auto_post: false,
-        lines: [emptyLine(), emptyLine()],
+        lines:
+            entry?.lines.map((line) => ({
+                chart_of_account_id: String(line.chart_of_account_id),
+                cost_center_id: line.cost_center_id ? String(line.cost_center_id) : 'none',
+                debit: String(line.debit ?? '0'),
+                credit: String(line.credit ?? '0'),
+                description: line.description ?? '',
+            })) ?? [emptyLine(), emptyLine()],
     });
 
     const setLine = (index: number, field: keyof JournalLine, value: string) => {
@@ -99,15 +134,21 @@ export default function JournalEntryForm({ action, accounts, currencies, costCen
             })),
         }));
 
+        if (method === 'put') {
+            form.put(action);
+
+            return;
+        }
+
         form.post(action);
     };
 
     return (
         <>
-            <Head title="Create Journal Entry" />
+            <Head title={title} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h1 className="text-2xl font-semibold">Create Journal Entry</h1>
+                    <h1 className="text-2xl font-semibold">{title}</h1>
                     <Button asChild variant="outline">
                         <Link href="/accounting/journal-entries">Back</Link>
                     </Button>
@@ -178,34 +219,11 @@ export default function JournalEntryForm({ action, accounts, currencies, costCen
                                 {form.data.lines.map((line, index) => (
                                     <tr key={index} className="border-t">
                                         <td className="p-3">
-                                            <Select value={line.chart_of_account_id} onValueChange={(value) => setLine(index, 'chart_of_account_id', value)}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select account" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {accounts.map((account) => (
-                                                        <SelectItem key={account.id} value={String(account.id)}>
-                                                            {account.account_code} - {account.account_name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <SearchableSelect value={line.chart_of_account_id} options={accountOptions} placeholder="Search account" onChange={(value) => setLine(index, 'chart_of_account_id', value)} />
                                             <InputError message={form.errors[`lines.${index}.chart_of_account_id`]} />
                                         </td>
                                         <td className="p-3">
-                                            <Select value={line.cost_center_id} onValueChange={(value) => setLine(index, 'cost_center_id', value)}>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Cost center" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="none">None</SelectItem>
-                                                    {costCenters.map((costCenter) => (
-                                                        <SelectItem key={costCenter.id} value={String(costCenter.id)}>
-                                                            {costCenter.code} - {costCenter.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            <SearchableSelect value={line.cost_center_id} options={costCenterOptions} placeholder="Search cost center" onChange={(value) => setLine(index, 'cost_center_id', value)} />
                                             <InputError message={form.errors[`lines.${index}.cost_center_id`]} />
                                         </td>
                                         <td className="p-3">
@@ -245,7 +263,7 @@ export default function JournalEntryForm({ action, accounts, currencies, costCen
                     <div className="flex justify-end">
                         <Button type="submit" disabled={form.processing}>
                             <Save className="size-4" />
-                            Save journal
+                            {method === 'put' ? 'Update journal' : 'Save journal'}
                         </Button>
                     </div>
                 </form>

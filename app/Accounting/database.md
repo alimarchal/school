@@ -46,6 +46,7 @@ Implemented:
 - PostgreSQL/MySQL/MariaDB/SQLite database object classes
 - install/seed/sync/verify/health/snapshot/period commands
 - journal entry create/post/reverse/void flow
+- journal entry draft edit/update flow
 - accounting period close/reopen flow
 - balance snapshots
 - general ledger report query
@@ -54,10 +55,16 @@ Implemented:
 - income statement report query
 - full web CRUD routes for setup resources
 - full API CRUD routes for setup resources
+- full API CRUD routes for tax codes and tax rates
+- read-only API routes for account balance snapshots
 - journal entry create/show/post/reverse/void API endpoints
+- journal entry draft update API endpoint
 - reusable Inertia list/create/edit/show pages for setup resources
 - chart of accounts create/edit/list/tree pages
 - journal entry list/create/show pages
+- journal entry edit page support through the shared form
+- searchable dropdowns for large accounting option sets
+- Spatie Query Builder filters on list screens
 - focused Pest tests
 
 ## Architecture
@@ -197,8 +204,13 @@ Current API routes:
 - `apiResource /api/v1/accounting/cost-centers`
 - `apiResource /api/v1/accounting/bank-accounts`
 - `apiResource /api/v1/accounting/reconciliations`
+- `apiResource /api/v1/accounting/tax-codes`
+- `apiResource /api/v1/accounting/tax-rates`
+- `GET /api/v1/accounting/account-balance-snapshots`
+- `GET /api/v1/accounting/account-balance-snapshots/{snapshot}`
 - `GET /api/v1/accounting/journal-entries`
 - `POST /api/v1/accounting/journal-entries`
+- `PUT/PATCH /api/v1/accounting/journal-entries/{journal_entry}`
 - `GET /api/v1/accounting/journal-entries/{journal_entry}`
 - `POST /api/v1/accounting/journal-entries/{journalEntry}/post`
 - `POST /api/v1/accounting/journal-entries/{journalEntry}/reverse`
@@ -276,7 +288,11 @@ Current web routes include:
 - bank accounts
 - reconciliations
 - journal entries
+- journal entry draft edit/update
 - journal post/reverse/void actions
+- tax codes
+- tax rates
+- account balance snapshots
 - general ledger
 - trial balance
 - balance sheet
@@ -305,6 +321,9 @@ Seeded permissions include:
 - `journal-entries.view/create/update/delete/post/reverse/void`
 - `bank-accounts.view/create/update/delete`
 - `reconciliations.view/create/update/delete`
+- `tax-codes.view/create/update/delete`
+- `tax-rates.view/create/update/delete`
+- `account-balance-snapshots.view`
 - `reports.general-ledger.view`
 - `reports.trial-balance.view`
 - `reports.balance-sheet.view`
@@ -423,6 +442,7 @@ Supports:
 - date range
 - account filter
 - status filter
+- order-free aggregate totals for PostgreSQL compatibility
 - total debit
 - total credit
 - closing balance
@@ -494,6 +514,9 @@ Covered:
 - permission removal blocks the next request
 - create routes require create permissions
 - API routes require matching resource permissions
+- CRUD/report URL smoke coverage
+- COA and journal filter URL smoke coverage
+- draft journal edit/update flow
 
 Verification commands:
 
@@ -509,21 +532,21 @@ npm run lint:check
 
 Last known verification:
 
-- full Pest suite: 56 passed, 176 assertions
-- accounting Pest slice: 17 passed, 40 assertions
+- full Pest suite: 78 passed, 203 assertions
+- accounting Pest slice: 39 passed, 67 assertions
 - TypeScript check: passed
 - ESLint check: passed
 - Pint: passed
 - Vite production build: passed
 - PostgreSQL `migrate:fresh --seed`: passed
 - PostgreSQL `accounting:install`: passed
-- PostgreSQL `accounting:verify`: passed
+- PostgreSQL `accounting:verify`: passed with 83 COA rows
 - MariaDB `migrate:fresh --seed`: passed
 - MariaDB `accounting:install`: passed
-- MariaDB `accounting:verify`: passed
+- MariaDB `accounting:verify`: passed with 83 COA rows
 - MySQL `migrate:fresh --seed`: passed
 - MySQL `accounting:install`: passed
-- MySQL `accounting:verify`: passed
+- MySQL `accounting:verify`: passed with 83 COA rows
 
 ## Future Implementation Checklist
 

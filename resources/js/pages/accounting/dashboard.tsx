@@ -1,10 +1,31 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { BarChart3, BookOpen, Building2, CalendarDays, FileText, Landmark, Percent, ReceiptText, Scale, WalletCards } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type Props = {
     summary: Record<string, number>;
 };
 
 export default function AccountingDashboard({ summary }: Props) {
+    const sections = [
+        { title: 'Chart of Accounts', href: '/accounting/chart-of-accounts', icon: BookOpen },
+        { title: 'Journal Entries', href: '/accounting/journal-entries', icon: ReceiptText },
+        { title: 'Account Types', href: '/accounting/account-types', icon: Scale },
+        { title: 'Currencies', href: '/accounting/currencies', icon: WalletCards },
+        { title: 'Periods', href: '/accounting/periods', icon: CalendarDays },
+        { title: 'Cost Centers', href: '/accounting/cost-centers', icon: Building2 },
+        { title: 'Bank Accounts', href: '/accounting/bank-accounts', icon: Landmark },
+        { title: 'Reconciliations', href: '/accounting/reconciliations', icon: FileText },
+        { title: 'Tax Codes', href: '/accounting/tax-codes', icon: Percent },
+        { title: 'Tax Rates', href: '/accounting/tax-rates', icon: Percent },
+        { title: 'Snapshots', href: '/accounting/account-balance-snapshots', icon: BarChart3 },
+        { title: 'General Ledger', href: '/accounting/reports/general-ledger', icon: BarChart3 },
+        { title: 'Trial Balance', href: '/accounting/reports/trial-balance', icon: BarChart3 },
+        { title: 'Balance Sheet', href: '/accounting/reports/balance-sheet', icon: BarChart3 },
+        { title: 'Income Statement', href: '/accounting/reports/income-statement', icon: BarChart3 },
+        { title: 'Audit Logs', href: '/accounting/audit-logs', icon: FileText },
+    ];
+
     return (
         <>
             <Head title="Accounting" />
@@ -19,6 +40,16 @@ export default function AccountingDashboard({ summary }: Props) {
                             <div className="text-sm text-muted-foreground">{label}</div>
                             <div className="mt-2 text-2xl font-semibold">{value}</div>
                         </div>
+                    ))}
+                </div>
+                <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+                    {sections.map((section) => (
+                        <Button key={section.href} asChild variant="outline" className="h-auto justify-start rounded-lg p-4">
+                            <Link href={section.href}>
+                                <section.icon className="size-4" />
+                                {section.title}
+                            </Link>
+                        </Button>
                     ))}
                 </div>
             </div>
