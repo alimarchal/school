@@ -1,0 +1,46 @@
+import { Head } from '@inertiajs/react';
+
+type Entry = {
+    id: number;
+    entry_date: string;
+    reference: string | null;
+    description: string | null;
+    status: string;
+};
+
+export default function JournalEntriesIndex({ entries }: { entries: { data: Entry[] } }) {
+    return (
+        <>
+            <Head title="Journal Entries" />
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
+                <h1 className="text-2xl font-semibold">Journal Entries</h1>
+                <div className="overflow-hidden rounded-lg border">
+                    <table className="w-full text-sm">
+                        <thead className="bg-muted/50 text-left">
+                            <tr>
+                                <th className="p-3">Date</th>
+                                <th className="p-3">Reference</th>
+                                <th className="p-3">Description</th>
+                                <th className="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {entries.data.map((entry) => (
+                                <tr key={entry.id} className="border-t">
+                                    <td className="p-3">{entry.entry_date}</td>
+                                    <td className="p-3">{entry.reference}</td>
+                                    <td className="p-3">{entry.description}</td>
+                                    <td className="p-3">{entry.status}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </>
+    );
+}
+
+JournalEntriesIndex.layout = {
+    breadcrumbs: [{ title: 'Journal Entries', href: '/accounting/journal-entries' }],
+};

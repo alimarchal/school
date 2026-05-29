@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Accounting\Models;
+
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Reconciliation extends AccountingModel
+{
+    protected $table = 'accounting_reconciliations';
+
+    protected $fillable = [
+        'bank_account_id',
+        'statement_date',
+        'statement_balance',
+        'book_balance',
+        'status',
+        'completed_at',
+        'completed_by',
+        'created_by',
+        'updated_by',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'statement_date' => 'date',
+            'statement_balance' => 'decimal:2',
+            'book_balance' => 'decimal:2',
+            'completed_at' => 'datetime',
+        ];
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class, 'bank_account_id');
+    }
+}
