@@ -311,6 +311,14 @@ Seeded permissions include:
 - `reports.income-statement.view`
 - `audit-logs.view`
 
+Every web and API accounting route is protected with explicit Laravel `can:*` middleware. Permissions are checked per action, so removing `journal-entries.post` only blocks posting, removing `chart-of-accounts.update` only blocks edit/update, and removing `accounting.view` blocks the accounting dashboard.
+
+Navigation also respects permissions:
+
+- `/dashboard` shows the Accounting card only when `accounting.view` is granted.
+- The sidebar shows the Accounting item only when `accounting.view` is granted.
+- Hidden navigation is convenience only; route middleware is the real enforcement layer.
+
 ## Accounting Rules
 
 Core rules enforced in service/database layers:
@@ -467,6 +475,7 @@ Current focused accounting tests:
 - `tests/Feature/Accounting/AccountingInstallTest.php`
 - `tests/Feature/Accounting/AccountingApiTest.php`
 - `tests/Feature/Accounting/JournalEntryPostingTest.php`
+- `tests/Feature/Accounting/AccountingPermissionAccessTest.php`
 
 Covered:
 
@@ -481,6 +490,10 @@ Covered:
 - versioned API chart of accounts index
 - versioned API chart of accounts route-model show
 - versioned API journal validation errors
+- permission-gated dashboard access
+- permission removal blocks the next request
+- create routes require create permissions
+- API routes require matching resource permissions
 
 Verification commands:
 
@@ -496,11 +509,12 @@ npm run lint:check
 
 Last known verification:
 
-- full Pest suite: 50 passed, 167 assertions
-- accounting Pest slice: 11 passed, 31 assertions
+- full Pest suite: 56 passed, 176 assertions
+- accounting Pest slice: 17 passed, 40 assertions
 - TypeScript check: passed
 - ESLint check: passed
 - Pint: passed
+- Vite production build: passed
 - PostgreSQL `migrate:fresh --seed`: passed
 - PostgreSQL `accounting:install`: passed
 - PostgreSQL `accounting:verify`: passed
@@ -535,3 +549,11 @@ When extending this module, preserve this order:
 - Do not mix school-specific accounts into the generic base COA.
 - Keep API and web controllers separate.
 - Keep database-engine-specific SQL out of normal migrations except through database object synchronizer classes.
+- Keep every accounting route behind explicit `can:*` middleware.
+- After changing permissions in code or seeders, clear Spatie's permission cache.
+
+## Usage Guide
+
+Operational usage instructions live in:
+
+- `app/Accounting/USAGE.md`

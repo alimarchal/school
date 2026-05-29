@@ -12,6 +12,7 @@ export type User = {
 
 export type Auth = {
     user: User;
+    accountingPermissions?: Record<string, boolean>;
 };
 
 /* @chisel-passkeys */
