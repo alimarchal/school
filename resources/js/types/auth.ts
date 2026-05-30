@@ -12,6 +12,7 @@ export type User = {
 
 export type Auth = {
     user: User;
+    can?: Record<string, boolean>;
     accountingPermissions?: Record<string, boolean>;
 };
 

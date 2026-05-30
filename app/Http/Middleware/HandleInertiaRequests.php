@@ -36,6 +36,14 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $appPermissions = [
+            'user.view',
+            'user.create',
+            'user.update',
+            'user.delete',
+            'user.assign-role',
+            'user.assign-permission',
+        ];
         $accountingPermissions = collect(config('accounting.permissions', []))
             ->mapWithKeys(fn (string $permission): array => [$permission => $user?->can($permission) ?? false])
             ->all();
@@ -45,7 +53,16 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+                'can' => collect($appPermissions)
+                    ->mapWithKeys(fn (string $permission): array => [
+                        str($permission)->replace('.', '_')->camel()->toString() => $user?->can($permission) ?? false,
+                    ])
+                    ->all(),
                 'accountingPermissions' => $accountingPermissions,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

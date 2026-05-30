@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Calculator, ShieldCheck } from 'lucide-react';
+import { Calculator, ShieldCheck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboard } from '@/routes';
@@ -13,6 +13,27 @@ export default function Dashboard() {
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
                 <div className="grid auto-rows-min gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {auth.can?.userView && (
+                        <Card className="rounded-lg">
+                            <CardHeader>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex size-10 items-center justify-center rounded-md border">
+                                        <Users className="size-5" />
+                                    </div>
+                                    <div>
+                                        <CardTitle>Users</CardTitle>
+                                        <CardDescription>Roles and direct permission exceptions.</CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <Button asChild>
+                                    <Link href="/users">Manage users</Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {canViewAccounting && (
                         <Card className="rounded-lg">
                             <CardHeader>

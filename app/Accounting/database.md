@@ -2,6 +2,28 @@
 
 This is the single source of truth for the accounting module in `/Users/alirazamarhcal/Herd/school`. Give this file to an LLM when it needs to understand, extend, debug, or port the module.
 
+## Current Access-Control Addendum
+
+The implementation includes a reusable `/users` CRUD for roles and permissions, modeled after the `nadra` app UI pattern.
+
+- URL: `https://school.test/users`
+- Controller: `App\Http\Controllers\Users\UserController`
+- Requests: `App\Http\Requests\Users\StoreUserRequest`, `App\Http\Requests\Users\UpdateUserRequest`
+- Policy: `App\Policies\UserPolicy`
+- Pages: `resources/js/pages/users/index.tsx`, `create.tsx`, `edit.tsx`
+- Middleware aliases: `role`, `permission`, `role_or_permission` in `bootstrap/app.php`
+- Super admin Gate: `super-admin` receives all abilities through `Gate::before`
+
+User access uses Spatie best practice:
+
+- roles are assigned to users
+- permissions are assigned to roles
+- direct user permissions are only exceptions
+- app checks permission names with `can`, `permission:*` middleware, policies, and `@can`
+- edits use `syncRoles()` and `syncPermissions()` so removed access is revoked
+
+Report pages for Trial Balance, Balance Sheet, and Income Statement must render professional tables, totals, export buttons, and empty states. They must never render raw JSON/preformatted dumps.
+
 ## Application Context
 
 - Laravel: 13.12.0

@@ -18,6 +18,7 @@ The install command runs migrations, seeds accounting defaults, syncs database v
 Main entry points:
 
 - App dashboard: `https://school.test/dashboard`
+- User/role/permission management: `https://school.test/users`
 - Accounting dashboard: `https://school.test/accounting`
 - Chart of accounts: `https://school.test/accounting/chart-of-accounts`
 - Journal entries: `https://school.test/accounting/journal-entries`
@@ -37,6 +38,7 @@ Main entry points:
 - Account statement: `https://school.test/accounting/reports/account-statement`
 
 The main dashboard and sidebar show the Accounting link only when the logged-in user has `accounting.view`.
+The main dashboard and sidebar show the Users link only when the logged-in user has `user.view`.
 
 List pages use paginated queries. COA, journal entries, and reusable setup screens support explicit Spatie Query Builder filters through `filter[...]` query parameters.
 
@@ -113,8 +115,26 @@ php artisan accounting:seed
 Roles:
 
 - `super-admin`: all accounting permissions
+- `admin`: user management plus read-heavy accounting access
 - `accountant`: operational accounting permissions
 - `viewer`: read-only accounting/report permissions
+
+User management permissions:
+
+- `user.view`: user index and filters
+- `user.create`: create users
+- `user.update`: update users
+- `user.delete`: delete users except self
+- `user.assign-role`: assign/sync roles on create and edit
+- `user.assign-permission`: assign/sync direct user permissions
+
+The `/users` CRUD follows Spatie best practice:
+
+- assign permissions to roles first
+- assign roles to users
+- use direct user permissions only for exceptions
+- check permission names through middleware, policies, `@can`, and `user()->can()`
+- use `syncRoles()` and `syncPermissions()` so removed roles/permissions are actually revoked
 
 Permission examples:
 
@@ -128,6 +148,50 @@ app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 ```
 
 After a permission is removed, the next request is blocked by route middleware.
+
+Role and permission administration examples:
+
+```php
+$user->assignRole('accountant');
+$user->removeRole('accountant');
+$user->syncRoles(['viewer']);
+
+$role = \Spatie\Permission\Models\Role::findByName('accountant');
+$role->givePermissionTo('journal-entries.post');
+$role->revokePermissionTo('journal-entries.post');
+$role->syncPermissions([
+    'accounting.view',
+    'journal-entries.view',
+    'reports.trial-balance.view',
+]);
+
+// Direct permission exception for one user.
+$user->givePermissionTo('journal-entries.post');
+$user->revokePermissionTo('journal-entries.post');
+
+app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+```
+
+Blade checks:
+
+```blade
+@can('journal-entries.post')
+    <button>Post journal</button>
+@endcan
+
+@can('user.update')
+    <a href="{{ route('users.edit', $user) }}">Edit user</a>
+@endcan
+```
+
+Route/controller checks:
+
+```php
+Route::get('/accounting/reports/trial-balance', TrialBalanceController::class)
+    ->middleware('can:reports.trial-balance.view');
+
+new \Illuminate\Routing\Controllers\Middleware('permission:user.update', only: ['edit', 'update']);
+```
 
 ## Route Permission Rules
 
@@ -235,6 +299,7 @@ Spatie permissions best practice used here:
 - assign permissions to roles by seeders
 - assign roles to users
 - check permission names through `can:*` route middleware and `user()->can()`
+- user CRUD uses Spatie `permission:*` middleware plus Laravel policies
 - use direct user permissions only for exceptions
 - after changing permissions directly, call `app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions()`
 

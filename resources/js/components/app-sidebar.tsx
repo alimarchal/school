@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import { BookOpen, Calculator, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, Calculator, FolderGit2, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -41,16 +41,27 @@ const footerNavItems: NavItem[] = [
 export function AppSidebar() {
     const { auth } = usePage().props;
     const canViewAccounting = auth.accountingPermissions?.['accounting.view'] === true;
-    const navigationItems = canViewAccounting
-        ? [
-              ...mainNavItems,
-              {
-                  title: 'Accounting',
-                  href: '/accounting',
-                  icon: Calculator,
-              },
-          ]
-        : mainNavItems;
+    const navigationItems = [
+        ...mainNavItems,
+        ...(auth.can?.userView
+            ? [
+                  {
+                      title: 'Users',
+                      href: '/users',
+                      icon: Users,
+                  },
+              ]
+            : []),
+        ...(canViewAccounting
+            ? [
+                  {
+                      title: 'Accounting',
+                      href: '/accounting',
+                      icon: Calculator,
+                  },
+              ]
+            : []),
+    ];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
