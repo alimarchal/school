@@ -1,6 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { playErrorSound, playSuccessSound } from '@/lib/sounds';
+import type { BreadcrumbItem } from '@/types';
 
 type EditableUser = {
     id: number;
@@ -18,6 +20,11 @@ type EditableUser = {
     roles: string[];
     permissions: string[];
 };
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Users', href: '/users' },
+    { title: 'Edit', href: '#' },
+];
 
 function toggleValue(items: string[], value: string, checked: boolean): string[] {
     return checked ? [...items, value] : items.filter((item) => item !== value);
@@ -41,6 +48,18 @@ export default function EditUser({ user, roles, permissions }: { user: EditableU
         () => permissions.filter((permission) => permission.toLowerCase().includes(permissionSearch.toLowerCase())),
         [permissions, permissionSearch],
     );
+
+    useEffect(() => {
+        if (flash.success) {
+            playSuccessSound();
+        }
+    }, [flash.success]);
+
+    useEffect(() => {
+        if (flash.error) {
+            playErrorSound();
+        }
+    }, [flash.error]);
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -158,3 +177,7 @@ export default function EditUser({ user, roles, permissions }: { user: EditableU
         </>
     );
 }
+
+EditUser.layout = {
+    breadcrumbs,
+};

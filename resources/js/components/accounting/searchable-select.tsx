@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 type Option = {
     value: string;
@@ -12,12 +13,30 @@ type Props = {
     options: Option[];
     placeholder: string;
     onChange: (value: string) => void;
+    className?: string;
 };
 
-export function SearchableSelect({ value, options, placeholder, onChange }: Props) {
+export function SearchableSelect({ value, options, placeholder, onChange, className }: Props) {
     const selected = options.find((option) => option.value === value);
     const [query, setQuery] = useState(selected?.label ?? '');
     const [open, setOpen] = useState(false);
+    const rootRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const closeWhenOutside = (event: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+                setOpen(false);
+
+                if (!selected && value === '') {
+                    setQuery('');
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', closeWhenOutside);
+
+        return () => document.removeEventListener('mousedown', closeWhenOutside);
+    }, [selected, value]);
 
     const filtered = useMemo(() => {
         const normalized = query.toLowerCase().trim();
@@ -28,11 +47,16 @@ export function SearchableSelect({ value, options, placeholder, onChange }: Prop
     }, [options, query]);
 
     return (
-        <div className="relative">
+        <div ref={rootRef} className={cn('relative', className)}>
             <Input
                 value={query}
                 placeholder={placeholder}
                 onFocus={() => setOpen(true)}
+                onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                        setOpen(false);
+                    }
+                }}
                 onChange={(event) => {
                     setQuery(event.target.value);
                     setOpen(true);

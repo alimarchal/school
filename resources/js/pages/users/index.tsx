@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Edit, Filter, Plus, Trash2, X } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { SearchableSelect } from '@/components/accounting/searchable-select';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { playErrorSound, playSuccessSound } from '@/lib/sounds';
 import type { BreadcrumbItem } from '@/types';
 
 type UserRow = {
@@ -41,8 +44,6 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Users', href: '/users' }];
 export default function UsersIndex({ users, filters, roles, permissions }: { users: Paginator<UserRow>; filters: Filters; roles: string[]; permissions: string[] }) {
     const { auth, flash } = usePage().props;
     const [filtersOpen, setFiltersOpen] = useState(false);
-    const [roleSearch, setRoleSearch] = useState('');
-    const [permissionSearch, setPermissionSearch] = useState('');
     const [values, setValues] = useState({
         name: filters.name ?? '',
         email: filters.email ?? '',
@@ -51,12 +52,22 @@ export default function UsersIndex({ users, filters, roles, permissions }: { use
         status: filters.status ?? '',
     });
 
-    const filteredRoles = useMemo(() => roles.filter((role) => role.toLowerCase().includes(roleSearch.toLowerCase())), [roles, roleSearch]);
-    const filteredPermissions = useMemo(
-        () => permissions.filter((permission) => permission.toLowerCase().includes(permissionSearch.toLowerCase())),
-        [permissions, permissionSearch],
-    );
+    const roleOptions = useMemo(() => roles.map((role) => ({ value: role, label: role })), [roles]);
+    const permissionOptions = useMemo(() => permissions.map((permission) => ({ value: permission, label: permission })), [permissions]);
     const hasFilters = Object.values(filters).some((value) => value);
+    const activeFilterCount = Object.values(values).filter(Boolean).length;
+
+    useEffect(() => {
+        if (flash.success) {
+            playSuccessSound();
+        }
+    }, [flash.success]);
+
+    useEffect(() => {
+        if (flash.error) {
+            playErrorSound();
+        }
+    }, [flash.error]);
 
     const applyFilters = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -78,8 +89,6 @@ export default function UsersIndex({ users, filters, roles, permissions }: { use
 
     const resetFilters = () => {
         setValues({ name: '', email: '', role: '', permission: '', status: '' });
-        setRoleSearch('');
-        setPermissionSearch('');
         router.get('/users', {}, { preserveState: true, preserveScroll: true, replace: true });
     };
 
@@ -96,16 +105,23 @@ export default function UsersIndex({ users, filters, roles, permissions }: { use
                 <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                     <Heading title="User management" description="Manage roles and direct permission exceptions using Spatie permissions." />
                     <div className="flex flex-wrap gap-2">
-                        <Button type="button" variant={filtersOpen ? 'secondary' : 'outline'} onClick={() => setFiltersOpen((open) => !open)}>
+                        <Button
+                            type="button"
+                            variant={filtersOpen ? 'secondary' : 'outline'}
+                            className="relative gap-2"
+                            title="Filters"
+                            aria-label="Filters"
+                            onClick={() => setFiltersOpen((open) => !open)}
+                        >
                             <Filter className="size-4" />
-                            Filters
-                            {hasFilters ? <Badge variant="secondary">Active</Badge> : null}
+                            <span>Filters</span>
+                            {hasFilters ? <span className="absolute -right-1 -top-1 size-2 rounded-full bg-primary" /> : null}
                         </Button>
                         {auth.can?.userCreate ? (
-                            <Button asChild>
-                                <Link href="/users/create">
+                            <Button asChild className="gap-2" title="New user" aria-label="New user">
+                                <Link href="/users/create" aria-label="New user">
                                     <Plus className="size-4" />
-                                    New User
+                                    <span>New user</span>
                                 </Link>
                             </Button>
                         ) : null}
@@ -126,55 +142,65 @@ export default function UsersIndex({ users, filters, roles, permissions }: { use
                 ) : null}
 
                 {filtersOpen ? (
-                    <Card className="rounded-lg">
-                        <CardHeader className="pb-0">
+                    <Card className="rounded-lg py-4">
+                        <CardHeader className="px-4 pb-3">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm">Filters</CardTitle>
-                                <Button type="button" variant="ghost" size="icon" onClick={() => setFiltersOpen(false)}>
+                                <div className="flex items-center gap-2">
+                                    <CardTitle className="text-sm">Filters</CardTitle>
+                                    {activeFilterCount > 0 ? <Badge variant="secondary">{activeFilterCount} active</Badge> : null}
+                                </div>
+                                <Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => setFiltersOpen(false)}>
                                     <X className="size-4" />
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <form onSubmit={applyFilters} className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="filter-name">Name</Label>
-                                    <Input id="filter-name" value={values.name} onChange={(event) => setValues({ ...values, name: event.target.value })} />
+                        <CardContent className="px-4">
+                            <form onSubmit={applyFilters} className="space-y-4">
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="filter-name">Name</Label>
+                                        <Input id="filter-name" value={values.name} onChange={(event) => setValues({ ...values, name: event.target.value })} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="filter-email">Email</Label>
+                                        <Input id="filter-email" value={values.email} onChange={(event) => setValues({ ...values, email: event.target.value })} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Role</Label>
+                                        <SearchableSelect
+                                            key={`role-${values.role || 'all'}`}
+                                            value={values.role}
+                                            options={roleOptions}
+                                            placeholder="All roles"
+                                            onChange={(role) => setValues({ ...values, role })}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Permission</Label>
+                                        <SearchableSelect
+                                            key={`permission-${values.permission || 'all'}`}
+                                            value={values.permission}
+                                            options={permissionOptions}
+                                            placeholder="All permissions"
+                                            onChange={(permission) => setValues({ ...values, permission })}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="filter-status">Status</Label>
+                                        <Select value={values.status || 'all'} onValueChange={(status) => setValues({ ...values, status: status === 'all' ? '' : status })}>
+                                            <SelectTrigger id="filter-status" className="w-full">
+                                                <SelectValue placeholder="All" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All</SelectItem>
+                                                <SelectItem value="verified">Verified</SelectItem>
+                                                <SelectItem value="unverified">Unverified</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="filter-email">Email</Label>
-                                    <Input id="filter-email" value={values.email} onChange={(event) => setValues({ ...values, email: event.target.value })} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="filter-role-search">Role</Label>
-                                    <Input id="filter-role-search" value={roleSearch} onChange={(event) => setRoleSearch(event.target.value)} placeholder="Search roles" />
-                                    <select className="border-input bg-background h-9 rounded-md border px-3 text-sm" value={values.role} onChange={(event) => setValues({ ...values, role: event.target.value })}>
-                                        <option value="">All roles</option>
-                                        {filteredRoles.map((role) => (
-                                            <option key={role} value={role}>{role}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="filter-permission-search">Permission</Label>
-                                    <Input id="filter-permission-search" value={permissionSearch} onChange={(event) => setPermissionSearch(event.target.value)} placeholder="Search permissions" />
-                                    <select className="border-input bg-background h-9 rounded-md border px-3 text-sm" value={values.permission} onChange={(event) => setValues({ ...values, permission: event.target.value })}>
-                                        <option value="">All permissions</option>
-                                        {filteredPermissions.map((permission) => (
-                                            <option key={permission} value={permission}>{permission}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="filter-status">Status</Label>
-                                    <select id="filter-status" className="border-input bg-background h-9 rounded-md border px-3 text-sm" value={values.status} onChange={(event) => setValues({ ...values, status: event.target.value })}>
-                                        <option value="">All</option>
-                                        <option value="verified">Verified</option>
-                                        <option value="unverified">Unverified</option>
-                                    </select>
-                                </div>
-                                <div className="flex items-end gap-2 md:col-span-5">
-                                    <Button type="submit">Apply</Button>
+                                <div className="flex justify-end gap-2">
+                                    <Button type="submit" className="min-w-20">Apply</Button>
                                     <Button type="button" variant="outline" onClick={resetFilters}>Clear</Button>
                                 </div>
                             </form>
