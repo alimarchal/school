@@ -159,4 +159,7 @@ Route::middleware(['web', 'auth', 'verified'])
         Route::get('audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index')
             ->middleware('can:audit-logs.view');
+        Route::get('audit-logs/{record}', [AuditLogController::class, 'show'])
+            ->name('audit-logs.show')
+            ->middleware('can:audit-logs.view');
     });

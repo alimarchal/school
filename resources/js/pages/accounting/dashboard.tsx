@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { BarChart3, BookOpen, Building2, CalendarDays, FileText, Landmark, Percent, ReceiptText, Scale, WalletCards } from 'lucide-react';
+import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 type Props = {
     summary: Record<string, number>;
@@ -33,17 +35,16 @@ export default function AccountingDashboard({ summary }: Props) {
     return (
         <>
             <Head title="Accounting" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-                <div>
-                    <h1 className="text-2xl font-semibold">Accounting</h1>
-                    <p className="text-sm text-muted-foreground">General ledger, chart of accounts, periods, and financial reports.</p>
-                </div>
+            <div className="space-y-6 p-4">
+                <Heading title="Accounting" description="General ledger, chart of accounts, periods, and financial reports." />
                 <div className="grid gap-3 md:grid-cols-4">
                     {Object.entries(summary).map(([label, value]) => (
-                        <div key={label} className="rounded-lg border p-4">
-                            <div className="text-sm text-muted-foreground">{label}</div>
-                            <div className="mt-2 text-2xl font-semibold">{value}</div>
-                        </div>
+                        <Card key={label} className="rounded-lg">
+                            <CardContent className="p-4">
+                                <div className="text-sm text-muted-foreground">{label}</div>
+                                <div className="mt-2 text-2xl font-semibold">{value}</div>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
                 <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">

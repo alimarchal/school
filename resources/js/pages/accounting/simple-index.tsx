@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import Heading from '@/components/heading';
 
 type Props = {
     records: {
@@ -13,8 +14,8 @@ export default function SimpleAccountingIndex({ records }: Props) {
     return (
         <>
             <Head title="Accounting Records" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4">
-                <h1 className="text-2xl font-semibold">Accounting Records</h1>
+            <div className="space-y-6 p-4">
+                <Heading title="Accounting Records" description="Review accounting data in a compact operational table." />
                 <div className="overflow-hidden rounded-lg border">
                     <table className="w-full text-sm">
                         <thead className="bg-muted/50 text-left">

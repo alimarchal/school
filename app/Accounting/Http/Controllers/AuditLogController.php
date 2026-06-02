@@ -22,6 +22,11 @@ class AuditLogController extends SimpleAccountingResourceController
         return 'Audit Log';
     }
 
+    protected function readOnly(): bool
+    {
+        return true;
+    }
+
     protected function fields(): array
     {
         return [
