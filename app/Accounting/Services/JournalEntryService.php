@@ -68,17 +68,30 @@ class JournalEntryService
                 'description' => $data['description'] ?? null,
             ]);
 
-            $journalEntry->lines()->delete();
+            $incomingLines = array_values($data['lines']);
+            $incomingIds = array_filter(array_column($incomingLines, 'id'));
 
-            foreach (array_values($data['lines']) as $index => $line) {
-                $journalEntry->lines()->create([
+            // Delete lines that are no longer in the payload
+            $journalEntry->lines()->when(
+                count($incomingIds) > 0,
+                fn ($query) => $query->whereNotIn('id', $incomingIds),
+            )->delete();
+
+            foreach ($incomingLines as $index => $line) {
+                $attributes = [
                     'line_no' => $index + 1,
                     'chart_of_account_id' => $line['chart_of_account_id'],
                     'cost_center_id' => $line['cost_center_id'] ?? null,
                     'debit' => $line['debit'] ?? 0,
                     'credit' => $line['credit'] ?? 0,
                     'description' => $line['description'] ?? null,
-                ]);
+                ];
+
+                if (! empty($line['id'])) {
+                    $journalEntry->lines()->where('id', $line['id'])->update($attributes);
+                } else {
+                    $journalEntry->lines()->create($attributes);
+                }
             }
 
             if (($data['auto_post'] ?? false) === true) {

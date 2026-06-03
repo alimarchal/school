@@ -15,6 +15,8 @@ use App\Accounting\Http\Controllers\Reports\AccountStatementController;
 use App\Accounting\Http\Controllers\Reports\AgedPayablesController;
 use App\Accounting\Http\Controllers\Reports\AgedReceivablesController;
 use App\Accounting\Http\Controllers\Reports\BalanceSheetController;
+use App\Accounting\Http\Controllers\Reports\BankBookController;
+use App\Accounting\Http\Controllers\Reports\CashBookController;
 use App\Accounting\Http\Controllers\Reports\CashFlowController;
 use App\Accounting\Http\Controllers\Reports\GeneralLedgerController;
 use App\Accounting\Http\Controllers\Reports\IncomeStatementController;
@@ -152,6 +154,12 @@ Route::middleware(['web', 'auth', 'verified'])
         Route::get('reports/account-statement', AccountStatementController::class)
             ->name('reports.account-statement')
             ->middleware('can:reports.account-statement.view');
+        Route::get('reports/bank-book', BankBookController::class)
+            ->name('reports.bank-book')
+            ->middleware('can:reports.bank-book.view');
+        Route::get('reports/cash-book', CashBookController::class)
+            ->name('reports.cash-book')
+            ->middleware('can:reports.cash-book.view');
         Route::get('reports/{report}/export/{format}', ReportExportController::class)
             ->whereIn('format', ['csv', 'xlsx', 'pdf'])
             ->name('reports.export')

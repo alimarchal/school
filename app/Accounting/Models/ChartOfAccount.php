@@ -2,12 +2,17 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\ChartOfAccountFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChartOfAccount extends AccountingModel
 {
-    protected $table = 'accounting_chart_of_accounts';
+    /** @use HasFactory<ChartOfAccountFactory> */
+    use HasFactory;
+
+    protected static string $factory = ChartOfAccountFactory::class;
 
     protected $fillable = [
         'parent_id',

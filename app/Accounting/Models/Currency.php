@@ -2,11 +2,16 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\CurrencyFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Currency extends AccountingModel
 {
-    protected $table = 'accounting_currencies';
+    /** @use HasFactory<CurrencyFactory> */
+    use HasFactory;
+
+    protected static string $factory = CurrencyFactory::class;
 
     protected $fillable = [
         'code',

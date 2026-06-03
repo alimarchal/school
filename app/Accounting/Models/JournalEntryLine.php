@@ -2,12 +2,17 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\JournalEntryLineFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalEntryLine extends Model
 {
-    protected $table = 'accounting_journal_entry_lines';
+    /** @use HasFactory<JournalEntryLineFactory> */
+    use HasFactory;
+
+    protected static string $factory = JournalEntryLineFactory::class;
 
     protected $fillable = [
         'journal_entry_id',

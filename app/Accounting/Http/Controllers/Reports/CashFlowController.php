@@ -12,10 +12,11 @@ class CashFlowController extends Controller
 {
     public function __invoke(Request $request, CashFlowReport $report): Response
     {
-        return Inertia::render('accounting/reports/table', [
-            'title' => 'Cash Flow',
-            'rows' => $report->rows($request->only(['date_from', 'date_to'])),
-            'exportBase' => '/accounting/reports/cash-flow/export',
+        $filters = $request->only(['date_from', 'date_to']);
+
+        return Inertia::render('accounting/reports/cash-flow', [
+            'rows' => $report->rows($filters),
+            'filters' => $filters,
         ]);
     }
 }

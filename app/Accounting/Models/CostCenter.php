@@ -2,12 +2,17 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\CostCenterFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CostCenter extends AccountingModel
 {
-    protected $table = 'accounting_cost_centers';
+    /** @use HasFactory<CostCenterFactory> */
+    use HasFactory;
+
+    protected static string $factory = CostCenterFactory::class;
 
     protected $fillable = [
         'parent_id',
