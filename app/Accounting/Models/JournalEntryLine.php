@@ -14,6 +14,8 @@ class JournalEntryLine extends Model
 
     protected static string $factory = JournalEntryLineFactory::class;
 
+    protected $table = 'accounting_journal_entry_lines';
+
     protected $fillable = [
         'journal_entry_id',
         'line_no',

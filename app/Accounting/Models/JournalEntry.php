@@ -13,9 +13,12 @@ class JournalEntry extends AccountingModel
 {
     /** @use HasFactory<JournalEntryFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     protected static string $factory = JournalEntryFactory::class;
+
+    protected $table = 'accounting_journal_entries';
 
     protected $fillable = [
         'entry_date',

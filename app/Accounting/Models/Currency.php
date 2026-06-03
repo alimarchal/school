@@ -13,6 +13,8 @@ class Currency extends AccountingModel
 
     protected static string $factory = CurrencyFactory::class;
 
+    protected $table = 'accounting_currencies';
+
     protected $fillable = [
         'code',
         'name',

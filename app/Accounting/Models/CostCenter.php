@@ -14,6 +14,8 @@ class CostCenter extends AccountingModel
 
     protected static string $factory = CostCenterFactory::class;
 
+    protected $table = 'accounting_cost_centers';
+
     protected $fillable = [
         'parent_id',
         'code',

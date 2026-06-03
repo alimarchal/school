@@ -14,6 +14,8 @@ class Reconciliation extends AccountingModel
 
     protected static string $factory = ReconciliationFactory::class;
 
+    protected $table = 'accounting_reconciliations';
+
     protected $fillable = [
         'bank_account_id',
         'statement_date',

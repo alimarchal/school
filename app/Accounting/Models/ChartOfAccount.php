@@ -14,6 +14,8 @@ class ChartOfAccount extends AccountingModel
 
     protected static string $factory = ChartOfAccountFactory::class;
 
+    protected $table = 'accounting_chart_of_accounts';
+
     protected $fillable = [
         'parent_id',
         'account_type_id',

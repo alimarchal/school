@@ -13,6 +13,8 @@ class AccountType extends AccountingModel
 
     protected static string $factory = AccountTypeFactory::class;
 
+    protected $table = 'accounting_account_types';
+
     protected $fillable = [
         'code',
         'name',
