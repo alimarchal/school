@@ -11,10 +11,8 @@ class AgedReceivablesController extends Controller
 {
     public function __invoke(AgedReceivablesReport $report): Response
     {
-        return Inertia::render('accounting/reports/table', [
-            'title' => 'Aged Receivables',
+        return Inertia::render('accounting/reports/aged-receivables', [
             'rows' => $report->rows(),
-            'exportBase' => '/accounting/reports/aged-receivables/export',
         ]);
     }
 }

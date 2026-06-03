@@ -2,11 +2,16 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\AccountTypeFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AccountType extends AccountingModel
 {
-    protected $table = 'accounting_account_types';
+    /** @use HasFactory<AccountTypeFactory> */
+    use HasFactory;
+
+    protected static string $factory = AccountTypeFactory::class;
 
     protected $fillable = [
         'code',

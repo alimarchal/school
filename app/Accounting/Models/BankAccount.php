@@ -2,14 +2,18 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\BankAccountFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankAccount extends AccountingModel
 {
+    /** @use HasFactory<BankAccountFactory> */
+    use HasFactory;
     use SoftDeletes;
 
-    protected $table = 'accounting_bank_accounts';
+    protected static string $factory = BankAccountFactory::class;
 
     protected $fillable = [
         'chart_of_account_id',

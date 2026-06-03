@@ -2,12 +2,17 @@
 
 namespace App\Accounting\Models;
 
+use Database\Factories\Accounting\ReconciliationFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Reconciliation extends AccountingModel
 {
-    protected $table = 'accounting_reconciliations';
+    /** @use HasFactory<ReconciliationFactory> */
+    use HasFactory;
+
+    protected static string $factory = ReconciliationFactory::class;
 
     protected $fillable = [
         'bank_account_id',

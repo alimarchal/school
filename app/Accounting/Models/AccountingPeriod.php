@@ -3,12 +3,17 @@
 namespace App\Accounting\Models;
 
 use App\Models\User;
+use Database\Factories\Accounting\AccountingPeriodFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AccountingPeriod extends AccountingModel
 {
-    protected $table = 'accounting_periods';
+    /** @use HasFactory<AccountingPeriodFactory> */
+    use HasFactory;
+
+    protected static string $factory = AccountingPeriodFactory::class;
 
     protected $fillable = [
         'name',

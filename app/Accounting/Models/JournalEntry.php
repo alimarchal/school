@@ -3,15 +3,19 @@
 namespace App\Accounting\Models;
 
 use App\Models\User;
+use Database\Factories\Accounting\JournalEntryFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class JournalEntry extends AccountingModel
 {
+    /** @use HasFactory<JournalEntryFactory> */
+    use HasFactory;
     use SoftDeletes;
 
-    protected $table = 'accounting_journal_entries';
+    protected static string $factory = JournalEntryFactory::class;
 
     protected $fillable = [
         'entry_date',
